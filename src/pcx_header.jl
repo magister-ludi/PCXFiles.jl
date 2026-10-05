@@ -46,9 +46,9 @@ struct PcxHeader
 end
 
 """
-    PCXImages.PcxHeader(filename::AbstractString)
+    PCXFiles.PcxHeader(filename::AbstractString)
 
-Construct a `PCXImages.PcxHeader` from the PCX file `filename`.
+Construct a `PCXFiles.PcxHeader` from the PCX file `filename`.
 """
 function PcxHeader(filename::AbstractString)
     hdr=nothing
@@ -59,9 +59,9 @@ function PcxHeader(filename::AbstractString)
 end
 
 """
-    PCXImages.PcxHeader(io::IO, end_of_data = 0)
+    PCXFiles.PcxHeader(io::IO, end_of_data = 0)
 
-Construct a `PCXImages.PcxHeader` from the input stream `io`.
+Construct a `PCXFiles.PcxHeader` from the input stream `io`.
 """
 function PcxHeader(io::IO, end_of_data = 0)
     start_of_data = position(io)
@@ -166,7 +166,7 @@ function PcxHeader(io::IO, end_of_data = 0)
 end
 
 """
-    PCXImages.PcxHeader(image::AbstractMatrix{C},
+    PCXFiles.PcxHeader(image::AbstractMatrix{C},
                     colors::AbstractArray{C},
                     smallest = false;
                     bpp = 0,
@@ -174,7 +174,7 @@ end
 
 ) where {C <: Colorant}
 
-Construct a `PCXImages.PcxHeader` suitable for storing `image` in PCX format
+Construct a `PCXFiles.PcxHeader` suitable for storing `image` in PCX format
 (used internally by `write_pcx`). `colors` is assumed to contain the distict
 colors in `image`. See `write_pcx` for the meaning of other parameters.
 """
