@@ -1,6 +1,6 @@
 # PCXFiles.jl
 
-[![Build status](https://github.com/magister-ludi/PCXFiles.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaIO/Netpbm.jl/actions/workflows/CI.yml)
+[![Build status](https://github.com/magister-ludi/PCXFiles.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/magister-ludi/PCXFiles.jl/actions/workflows/CI.yml)
 
 Read and write [PCX](https://en.wikipedia.org/wiki/PCX) formats in pure Julia.
 This package does not (yet) implement the
@@ -46,7 +46,7 @@ The package exports four names. The signatures of the simplest invocations are:
 
  - `write_pcx(filename::AbstractString, image::AbstractMatrix{<:Colorant})`: save `image` in PCX format to the file `filename`.
 
- - `write_pcx(io::IO, image::AbstractMatrix{<:Colorant})`: write `image` in PCX format to the stream `filename`.
+ - `write_pcx(io::IO, image::AbstractMatrix{<:Colorant})`: write `image` in PCX format to the stream `io`.
 
  - `read_dcx(file::AbstractString)`: read the file `filename` as a DCX file and return
  a `Vector{Matrix{<:Colorant}}`.
@@ -63,4 +63,4 @@ The methods whose names start with `write_` take additional arguments and keywor
 
 ## Correctness
 
-Most read/write results conform with other software I have tested. However, the specification is sometimes open to interpretation. Please open issues or pull requests if necessary.
+Most read/write results conform with other software I have tested. However, the specification is sometimes open to interpretation. Please open issues or pull requests as necessary.
