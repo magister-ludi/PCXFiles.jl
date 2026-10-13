@@ -5,15 +5,15 @@
 Read and write [PCX](https://en.wikipedia.org/wiki/PCX) formats in pure Julia.
 This package does not (yet) implement the
 [FileIO](https://github.com/JuliaIO/FileIO.jl) interface for loading
-and saving PCX images.
+and saving PCX images. 
 
 PCX is an image format developed by ZSoft and Microsoft for use by PC Paintbrush on DOS and Windows computers. DCX is an extension of the PCX format which can store multiple images in a single file. Format summaries for both formats are provided [here](https://www.fileformat.info/format/pcx/egff.htm). The format specification was first released in 1985; the final release was in 1991.
 
-As [described by Adobe](https://www.adobe.com/creativecloud/file-types/image/raster/pcx-file.html) PCX format was useful as a lossless, compressed format. Compression was poor in comparison with modern formats, but easy to implement.
+As [described by Adobe](https://www.adobe.com/creativecloud/file-types/image/raster/pcx-file.html) PCX format was useful as a lossless, compressed format. Compression was poor in comparison with modern formats, but easy to implement. 
 
 ## PCX format
 
-PCX can store image data up to 32 bytes per pixel (red, green, blue, alpha with 1 byte each). Few software implementations are able to read/write all PCX files, because the specifications are incomplete, and because some files extend the specifications (which, for instance, do not include an alpha channel).
+PCX can store image data up to 32 bytes per pixel (red, green, blue, alpha with 1 byte each). Few software implementations are able to read/write all PCX files, because the specifications are incomplete, and because some files extend  the specifications (which, for instance, do not include an alpha channel).
 
 PCXFiles.jl will read and write PCX data with the following attributes:
 
