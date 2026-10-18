@@ -13,11 +13,11 @@ As [described by Adobe](https://www.adobe.com/creativecloud/file-types/image/ras
 
 ## PCX format
 
-PCX can store image data up to 32 bytes per pixel (red, green, blue, alpha with 1 byte each). Few software implementations are able to read/write all PCX files, because the specifications are incomplete, and because some files extend  the specifications (which, for instance, do not include an alpha channel).
+PCX can store image data up to 32 bits per pixel (red, green, blue, alpha with 1 byte each). Few software implementations are able to read/write all PCX files, because the specifications are incomplete, and because some files extend the specifications (which, for instance, do not include an alpha channel).
 
 PCXFiles.jl will read and write PCX data with the following attributes:
 
-| Bits per pixel  | Planes | Number of colours |
+| Bits per pixel | Planes | Number of colours |
 | :---: | :---: | :---: |
 | 1  | 1  | 2 |
 | 1  | 2  | 4 |
@@ -51,7 +51,7 @@ The package exports four names. The signatures of the simplest invocations are:
  - `read_dcx(file::AbstractString)`: read the file `filename` as a DCX file and return
  a `Vector{Matrix{<:Colorant}}`.
 
- - `read_dcx(`: read the stream `io` as a DCX stream and return a `Vector{Matrix{<:Colorant}}`.
+ - `read_dcx(io::IO)`: read the stream `io` as a DCX stream and return a `Vector{Matrix{<:Colorant}}`.
 
  - `write_dcx(filename::AbstractString, image::AbstractVector{AbstractMatrix{<:Colorant}})`: save `images` in DCX format to the file `filename`.
 
