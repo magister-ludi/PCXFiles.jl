@@ -124,3 +124,13 @@ function rle_decode(io::IO, out::AbstractVector{UInt8})
         end
     end
 end
+
+# Methods for use by FileIO/ImageIO
+
+function load(f::File{format"PCX"})
+    open(f) do s
+        load(s)
+    end
+end
+
+load(s::Stream{format"PCX"}) = read_pcx(s.io)

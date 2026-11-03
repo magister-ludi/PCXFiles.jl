@@ -1,6 +1,7 @@
 module PCXFiles
 
 using ColorTypes
+using FileIO
 using FixedPointNumbers
 
 export read_pcx, write_pcx, read_dcx, write_dcx

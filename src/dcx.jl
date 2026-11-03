@@ -60,36 +60,36 @@ function read_dcx(io::IO)
 end
 
 """
-    write_dcx(filename::AbstractString, images::AbstractVector{<:AbstractMatrix{<:Colorant}})
+    write_dcx(filename::AbstractString, images::AbstractVector{<:AbstractMatrix{<:Colorant}}; smallest, bpp, nplanes)
 
 Write `images` to the file `filename` in DCX format. See
-    write_pcx(::AbstractString, AbstractMatrix, Bool; bpp, nplanes::Integer)
+    write_pcx(::AbstractString, AbstractMatrix, Bool; smallest, bpp, nplanes)
 for a description of other parameters.
 """
 function write_dcx(
     filename::AbstractString,
-    images::AbstractVector{<:AbstractMatrix{<:Colorant}},
-    smallest::Bool = false;
+    images::AbstractVector{<:AbstractMatrix{<:Colorant}};
+    smallest::Bool = false,
     bpp::Integer = 0,
     nplanes::Integer = 0,
 )
     open(filename, "w") do io
-        return write_dcx(io, images, smallest; bpp = bpp, nplanes = nplanes)
+        return write_dcx(io, images; smallest = smallest, bpp = bpp, nplanes = nplanes)
     end
     return
 end
 
 """
-    write_dcx(io::IO, images::AbstractVector{<:AbstractMatrix{<:Colorant}})
+    write_dcx(io::IO, images::AbstractVector{<:AbstractMatrix{<:Colorant}}; smallest, bpp, nplanes)
 
 Write `images` to the stream `io` in DCX format. See
-    write_pcx(::AbstractString, AbstractMatrix, Bool; bpp, nplanes::Integer)
+    write_pcx(::AbstractString, AbstractMatrix; smallest, bpp, nplanes)
 for a description of other parameters.
 """
 function write_dcx(
     io::IO,
-    images::AbstractVector{<:AbstractMatrix{<:Colorant}},
-    smallest::Bool = false;
+    images::AbstractVector{<:AbstractMatrix{<:Colorant}};
+    smallest::Bool = false,
     bpp::Integer = 0,
     nplanes::Integer = 0,
 )
@@ -99,9 +99,28 @@ function write_dcx(
     write(io, hdr.table)
     for i = 1:nimages
         hdr.table[i] = position(io)
-        write_pcx(io, images[i], smallest; bpp = bpp, nplanes = nplanes)
+        write_pcx(io, images[i]; smallest = smallest, bpp = bpp, nplanes = nplanes)
     end
     seek(io, sizeof(hdr.id))
     write(io, hdr.table)
     return
 end
+
+# Methods for use by FileIO/ImageIO
+
+function load(f::File{format"DCX"})
+    open(f) do s
+        load(s)
+    end
+end
+
+load(s::Stream{format"DCX"}) = read_dcx(s.io)
+
+function save(f::File{format"DCX"}, images::AbstractVector{<:AbstractMatrix{<:Colorant}}; kwargs...)
+    open(f, "w") do s
+        save(s, images; kwargs...)
+    end
+end
+
+save(s::Stream{format"DCX"}, images::AbstractVector{<:AbstractMatrix{<:Colorant}}; kwargs...) =
+    write_dcx(s.io, images; kwargs...)

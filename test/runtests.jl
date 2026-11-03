@@ -1,4 +1,6 @@
+
 using ColorTypes
+using FileIO
 using FixedPointNumbers
 using PCXFiles
 using Test
@@ -49,40 +51,70 @@ const n_iter = 10
         return rand(colors, size, size)
     end
 
-    @testset "Save smallest" begin
-        buf = IOBuffer()
-        dcxdata = Vector{Matrix{RGB{N0f8}}}(undef, n_iter)
-        for ncolors in (2, 4, 8, 16, 256, 512)
-            for i in 1:n_iter
-                img = construct_image(ncolors, test_size)
+    @testset "read/write PCX/DCX" begin
+        @testset "Save smallest" begin
+            buf = IOBuffer()
+            dcxdata = Vector{Matrix{RGB{N0f8}}}(undef, n_iter)
+            for ncolors in (2, 4, 8, 16, 256, 512)
+                for i in 1:n_iter
+                    img = construct_image(ncolors, test_size)
+                    take!(buf)
+                    write_pcx(buf, img; smallest = true)
+                    dcxdata[i] = img
+                    seekstart(buf)
+                    pixels = read_pcx(buf)
+                    @test size(pixels) == size(img)
+                    @test pixels == img
+                end
                 take!(buf)
-                write_pcx(buf, img, true)
-                dcxdata[i] = img
+                write_dcx(buf, dcxdata)
                 seekstart(buf)
-                pixels = read_pcx(buf)
-                @test size(pixels) == size(img)
-                @test pixels == img
-            end
-            take!(buf)
-            write_dcx(buf, dcxdata)
-            seekstart(buf)
-            dcx = read_dcx(buf)
-            @test length(dcx) == length(dcxdata)
-            for i in 1:n_iter
-                @test size(dcx[i]) == size(dcxdata[i])
-                @test dcx[i] == dcxdata[i]
+                dcx = read_dcx(buf)
+                @test length(dcx) == length(dcxdata)
+                for i in 1:n_iter
+                    @test size(dcx[i]) == size(dcxdata[i])
+                    @test dcx[i] == dcxdata[i]
+                end
             end
         end
-    end
 
-    @testset "Specific formats" begin
-        buf = IOBuffer()
-        dcxdata = Vector{Matrix{RGB{N0f8}}}(undef, n_iter)
-        for ncolors in (2, 4, 8, 16, 256, 512)
-            for (bpp, npl) in bitkeys
-                if max_colors[(bpp, npl)] >= ncolors
+        @testset "Specific formats" begin
+            buf = IOBuffer()
+            dcxdata = Vector{Matrix{RGB{N0f8}}}(undef, n_iter)
+            for ncolors in (2, 4, 8, 16, 256, 512)
+                for (bpp, npl) in bitkeys
+                    if max_colors[(bpp, npl)] >= ncolors
+                        for i in 1:n_iter
+                            img = construct_image(ncolors, test_size)
+                            take!(buf)
+                            write_pcx(buf, img; bpp = bpp, nplanes = npl)
+                            dcxdata[i] = img
+                            seekstart(buf)
+                            pixels = read_pcx(buf)
+                            @test size(pixels) == size(img)
+                            @test pixels == img
+                        end
+                        take!(buf)
+                        write_dcx(buf, dcxdata[1:n_iter])
+                        seekstart(buf)
+                        dcx = read_dcx(buf)
+                        @test length(dcx) == n_iter
+                        for i in 1:n_iter
+                            @test size(dcx[i]) == size(dcxdata[i])
+                            @test dcx[i] == dcxdata[i]
+                        end
+                    end
+                end
+            end
+        end
+
+        @testset "Transparency" begin
+            buf = IOBuffer()
+            dcxdata = Vector{Matrix{ARGB32}}(undef, n_iter)
+            for ncolors in (2, 4, 8, 16, 256, 512)
+                for (bpp, npl) in bitkeys
                     for i in 1:n_iter
-                        img = construct_image(ncolors, test_size)
+                        img = construct_transparent_image(ncolors, test_size)
                         take!(buf)
                         write_pcx(buf, img; bpp = bpp, nplanes = npl)
                         dcxdata[i] = img
@@ -92,7 +124,7 @@ const n_iter = 10
                         @test pixels == img
                     end
                     take!(buf)
-                    write_dcx(buf, @view dcxdata[1:n_iter])
+                    write_dcx(buf, dcxdata[1:n_iter])
                     seekstart(buf)
                     dcx = read_dcx(buf)
                     @test length(dcx) == n_iter
@@ -105,29 +137,115 @@ const n_iter = 10
         end
     end
 
-    @testset "Transparency" begin
-        buf = IOBuffer()
-        dcxdata = Vector{Matrix{ARGB32}}(undef, n_iter)
-        for ncolors in (2, 4, 8, 16, 256, 512)
-            for (bpp, npl) in bitkeys
+    @testset "FileIO integration" begin
+        workdir = joinpath(tempdir(), "Images")
+        isdir(workdir) && rm(workdir, recursive = true)
+        mkdir(workdir)
+        pcx_format = format"PCX"
+        dcx_format = format"DCX"
+
+        @testset "Save smallest" begin
+            dcxdata = Vector{Matrix{RGB{N0f8}}}(undef, n_iter)
+            for ncolors in (2, 4, 8, 16, 256, 512)
                 for i in 1:n_iter
-                    img = construct_transparent_image(ncolors, test_size)
-                    take!(buf)
-                    write_pcx(buf, img; bpp = bpp, nplanes = npl)
+                    img = construct_image(ncolors, test_size)
+                    fn = File{pcx_format}(
+                                joinpath(
+                                    workdir,
+                                    string("sm_", lpad(i, 3, '0'), ".pcx")
+                                )
+                            )
+                    PCXFiles.save(fn, img; smallest = true)
                     dcxdata[i] = img
-                    seekstart(buf)
-                    pixels = read_pcx(buf)
+                    pixels = PCXFiles.load(fn)
                     @test size(pixels) == size(img)
                     @test pixels == img
                 end
-                take!(buf)
-                write_dcx(buf, @view dcxdata[1:n_iter])
-                seekstart(buf)
-                dcx = read_dcx(buf)
-                @test length(dcx) == n_iter
+                fn = File{dcx_format}(
+                                joinpath(
+                                    workdir,
+                                    string("sm_", ncolors, ".dcx")
+                                )
+                            )
+                PCXFiles.save(fn, dcxdata)
+                dcx = PCXFiles.load(fn)
+                @test length(dcx) == length(dcxdata)
                 for i in 1:n_iter
                     @test size(dcx[i]) == size(dcxdata[i])
                     @test dcx[i] == dcxdata[i]
+                end
+            end
+        end
+
+        @testset "Specific formats" begin
+            dcxdata = Vector{Matrix{RGB{N0f8}}}(undef, n_iter)
+            for ncolors in (2, 4, 8, 16, 256, 512)
+                for (bpp, npl) in bitkeys
+                    if max_colors[(bpp, npl)] >= ncolors
+                        for i in 1:n_iter
+                            img = construct_image(ncolors, test_size)
+                            fn = File{pcx_format}(
+                                joinpath(
+                                    workdir,
+                                    string("frm_", bpp, "_", npl, ".pcx")
+                                )
+                            )
+                            PCXFiles.save(fn, img; bpp = bpp, nplanes = npl)
+                            dcxdata[i] = img
+                            pixels = PCXFiles.load(fn)
+                            @test size(pixels) == size(img)
+                            @test pixels == img
+                        end
+                        fn = File{dcx_format}(
+                            joinpath(
+                                workdir,
+                                string("frm_", ncolors, ".dcx")
+                            )
+                        )
+                        PCXFiles.save(fn, dcxdata[1:n_iter])
+                        dcx = PCXFiles.load(fn)
+                        @test length(dcx) == n_iter
+                        for i in 1:n_iter
+                            @test size(dcx[i]) == size(dcxdata[i])
+                            @test dcx[i] == dcxdata[i]
+                        end
+                    end
+                end
+            end
+        end
+
+        @testset "Transparency" begin
+            buf = IOBuffer()
+            dcxdata = Vector{Matrix{ARGB32}}(undef, n_iter)
+            for ncolors in (2, 4, 8, 16, 256, 512)
+                for (bpp, npl) in bitkeys
+                    for i in 1:n_iter
+                        img = construct_transparent_image(ncolors, test_size)
+                        fn = File{pcx_format}(
+                            joinpath(
+                                workdir,
+                                string("tr_", bpp, "_", npl, ".pcx")
+                            )
+                        )
+                        PCXFiles.save(fn, img; bpp = bpp, nplanes = npl)
+                        dcxdata[i] = img
+                        pixels = PCXFiles.load(fn)
+                        @test size(pixels) == size(img)
+                        @test pixels == img
+                    end
+                    fn = File{dcx_format}(
+                        joinpath(
+                            workdir,
+                            string("tr_", ncolors, ".dcx")
+                        )
+                    )
+                    PCXFiles.save(fn, dcxdata[1:n_iter])
+                    dcx = PCXFiles.load(fn)
+                    @test length(dcx) == n_iter
+                    for i in 1:n_iter
+                        @test size(dcx[i]) == size(dcxdata[i])
+                        @test dcx[i] == dcxdata[i]
+                    end
                 end
             end
         end

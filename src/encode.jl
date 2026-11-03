@@ -17,8 +17,8 @@ end
 """
     write_pcx(
         filename::AbstractString,
-        image::AbstractMatrix{<:Colorant},
-        smallest::Bool = false;
+        image::AbstractMatrix{<:Colorant};
+        smallest::Bool = false,
         bpp::Integer = 0,
         nplanes::Integer = 0
     )
@@ -45,13 +45,13 @@ those values will be set and `smallest` will be ignored.
 """
 function write_pcx(
         filename::AbstractString,
-        image::AbstractMatrix{<:Colorant},
-        smallest::Bool = false;
+        image::AbstractMatrix{<:Colorant};
+        smallest::Bool = false,
         bpp::Integer = 0,
         nplanes::Integer = 0,
     )
     open(filename, "w") do io
-        write_pcx(io, image, smallest; bpp = bpp, nplanes = nplanes)
+        write_pcx(io, image; smallest = smallest, bpp = bpp, nplanes = nplanes)
     end
     return
 end
@@ -59,20 +59,20 @@ end
 """
     write_pcx(
         io::IO,
-        image::AbstractMatrix{<:Colorant},
-        smallest::Bool = false;
+        image::AbstractMatrix{<:Colorant};
+        smallest::Bool = false,
         bpp::Integer = 0,
         nplanes::Integer = 0
     )
 
 Write `image` in PCX format to `io`. See
-    write_pcx(::AbstractString, AbstractMatrix, Bool; bpp, nplanes::Integer)
+    write_pcx(filename::AbstractString, image::AbstractMatrix; smallest ,bpp, nplanes)
 for a description of other parameters.
 """
 function write_pcx(
         io::IO,
-        image::AbstractMatrix{C},
-        smallest::Bool = false;
+        image::AbstractMatrix{C};
+        smallest::Bool = false,
         bpp::Integer = 0,
         nplanes::Integer = 0,
     ) where {C <: Colorant}
@@ -104,7 +104,7 @@ function write_pcx(
         # Construct map from color to palette index
         color_dict = Dict((c => UInt8(i - 1) for (i, c) in enumerate(colors)))
     end
-    hdr = PcxHeader(image, colors, smallest; bpp=bpp, nplanes=nplanes)
+    hdr = PcxHeader(image, colors; smallest = smallest, bpp = bpp, nplanes = nplanes)
 
     write(io, 0x0a)                      # magic number
     write(io, hdr.version)               # version
@@ -118,7 +118,6 @@ function write_pcx(
     writeint(io, zero(UInt16))           # vres
     # color map:
     palcount = 0
-    #@show length(colors), hdr.bpp, hdr.nplanes
     if hdr.bpp == 1 && hdr.nplanes == 1
         r = reinterpret(UInt8, red(colors[2]))
         g = reinterpret(UInt8, green(colors[2]))
@@ -327,3 +326,14 @@ function rle_encode(io::IO, picLine::AbstractVector{UInt8})
     end
     return
 end
+
+# Methods for use by FileIO/ImageIO
+
+function save(f::File{format"PCX"}, image::AbstractMatrix{<:Colorant}; kwargs...)
+    open(f, "w") do s
+        save(s, image; kwargs...)
+    end
+end
+
+save(s::Stream{format"PCX"}, image::AbstractMatrix{<:Colorant}; kwargs...) =
+    write_pcx(s.io, image; kwargs...)

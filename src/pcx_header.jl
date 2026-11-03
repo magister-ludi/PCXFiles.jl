@@ -167,10 +167,10 @@ end
 
 """
     PCXFiles.PcxHeader(image::AbstractMatrix{C},
-                    colors::AbstractArray{C},
-                    smallest = false;
-                    bpp = 0,
-                    nplanes = 0,
+                    colors::AbstractArray{C};
+                    smallest::Bool = false,
+                    bpp::Integer = 0,
+                    nplanes::Integer = 0,
 
 ) where {C <: Colorant}
 
@@ -180,8 +180,8 @@ colors in `image`. See `write_pcx` for the meaning of other parameters.
 """
 function PcxHeader(
         image::AbstractMatrix{C},
-        colors::AbstractArray{C},
-        smallest = false;
+        colors::AbstractArray{C};
+        smallest::Bool = false,
         bpp::Integer = 0,
         nplanes::Integer = 0,
     ) where {C <: Colorant}
@@ -194,7 +194,7 @@ function PcxHeader(
     elseif iszero(bpp) && iszero(nplanes)
         bpp, nplanes = choose_encoding(ncolors, smallest)
     elseif ncolors > 2^(bpp * nplanes)
-        error("Image has $ncolors colors. Encoding with $bpp bits/pixel, $nplanes is not possible")
+        error("Image has $ncolors colors. Encoding with $bpp bit(s)/pixel, $nplanes plane(s) is not possible")
     end
 
     bpl = ceil(Int, width * bpp / 8)
